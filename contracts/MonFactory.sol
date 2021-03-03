@@ -27,11 +27,19 @@ contract MonFactory is Ownable {
     bool receivedFirstCryptoMon;
   }
 
+  //Contains the list of all exisiting cryptoMons
+  //The index of the cryptoMon is its unique ID
   CryptoMon[] public cryptoMons;
 
+  //Mapping to map addresses to player details
   mapping (address => Player) public players;
+  //Mapping to store the owner of mons. Key is the unique ID of the mon and value is the
+  //address of the owner
   mapping (uint256 => address) public monToOwner;
 
+  /**
+   * Creates a new User
+   */
   function createUser
     (
       string memory _name, 
@@ -41,6 +49,9 @@ contract MonFactory is Ownable {
     players[msg.sender] = Player(_name, _avatar, true, false);
   }
 
+  /**
+   * Creates first cryptoMons for Users who haven't received their first cryptoMons yet
+   */
   function createFirstCryptoMon
     (
       string[] memory _names, 
@@ -49,11 +60,14 @@ contract MonFactory is Ownable {
       bool[] memory _shiny,
       address _player
     ) public onlyOwner {
-    require(!players[msg.sender].receivedFirstCryptoMon, "You already received your first cryptoMon!");
+    require(!players[_player].receivedFirstCryptoMon, "You already received your first cryptoMon!");
     _createNewCryptoMon(_names, _genders, _pokemonIds, _shiny, _player);
-    players[msg.sender].receivedFirstCryptoMon = true;
+    players[_player].receivedFirstCryptoMon = true;
   }
 
+  /**
+   * Generates new cryptoMons for a player
+   */
   function _createNewCryptoMon
     (
       string[] memory _names, 
