@@ -13,6 +13,8 @@ contract MonBattle is MonFactory {
   //send a random number to settle the battle
   event StartBattle(uint256 _mon1, uint256 _mon2);
 
+  event SettleBattle(bytes32 _hash, uint256 _winnerMon);
+
   modifier onlyMonOwner(uint256 _cryptoMonId) {
     require(_cryptoMonId < cryptoMons.length, "Invalid Mon ID");
     require(msg.sender == monToOwner[_cryptoMonId], "You're not the owner of this cryptoMon!");
@@ -30,6 +32,7 @@ contract MonBattle is MonFactory {
    */
   function setBattleReady(uint256 _cryptoMonId) public onlyMonOwner(_cryptoMonId) {
     require(!cryptoMons[_cryptoMonId].battleReady, "Already battle ready!");
+    require(now >= cryptoMons[_cryptoMonId].battleReadyTime, "Not ready to be battle ready yet!");
     cryptoMons[_cryptoMonId].battleReady = true;
   }
 
@@ -56,5 +59,15 @@ contract MonBattle is MonFactory {
     battles[keccak256(abi.encodePacked(_ownerMon, _oppositeMon))] = true;
 
     emit StartBattle(_ownerMon, _oppositeMon);
+  }
+
+  function settleBattle(uint256 _ownerMon, uint256 _oppositeMon, uint16 _randomNumber) public onlyOwner {
+    require(battles[keccak256(abi.encodePacked(_ownerMon, _oppositeMon))], "No such battle!");
+
+    if(_randomNumber > 50) {
+      emit SettleBattle(keccak256(abi.encodePacked(_ownerMon, _oppositeMon)), _ownerMon);
+    } else {
+      emit SettleBattle(keccak256(abi.encodePacked(_ownerMon, _oppositeMon)), _oppositeMon);
+    }
   }
 }

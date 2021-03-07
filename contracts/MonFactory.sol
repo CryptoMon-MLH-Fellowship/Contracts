@@ -25,6 +25,8 @@ contract MonFactory is Ownable {
     string avatar;
     bool verified;
     bool receivedFirstCryptoMon;
+    bool challengeReady;
+    uint256 monCount;
   }
 
   //Contains the list of all exisiting cryptoMons
@@ -46,7 +48,7 @@ contract MonFactory is Ownable {
       string memory _avatar
     ) public {
     require(!players[msg.sender].verified, "You already have an account!");
-    players[msg.sender] = Player(_name, _avatar, true, false);
+    players[msg.sender] = Player(_name, _avatar, true, false, false, 0);
   }
 
   /**
@@ -82,8 +84,8 @@ contract MonFactory is Ownable {
         _names[i],
         _genders[i],
         BASE_XP,
-        now + BATTLE_COOLDOWN_TIME,
-        now + BREED_COOLDOWN_TIME,
+        now,
+        now,
         _pokemonIds[i],
         1,
         false,
@@ -92,5 +94,20 @@ contract MonFactory is Ownable {
 
       monToOwner[id] = _player;
     }
+
+    players[_player].monCount += _names.length;
+  }
+
+  function getCryptoMonsByOwner(address _owner) public view returns (CryptoMon[] memory) {
+    CryptoMon[] memory ownedCryptoMons = new CryptoMon[](players[_owner].monCount);
+    uint index = 0;
+    for(uint i = 0; i < cryptoMons.length; i++) {
+      if(monToOwner[i] == _owner) {
+        ownedCryptoMons[index] = cryptoMons[i];
+        index++;
+      }
+    }
+
+    return ownedCryptoMons;
   }
 }
