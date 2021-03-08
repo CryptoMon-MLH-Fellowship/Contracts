@@ -18,26 +18,12 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 		 * 3 = Squirtle (Misty)
 		 */
 
-		await contractInstance.createFirstCryptoMon(
-			["pikachu", "pidgey"],
-			["male", "male"],
-			[1, 2],
-			[false, true],
-			ash,
-			{
-				from: owner,
-			}
-		);
-		await contractInstance.createFirstCryptoMon(
-			["bulbasaur", "squirtle"],
-			["male", "female"],
-			[3, 4],
-			[false, false],
-			misty,
-			{
-				from: owner,
-			}
-		);
+		await contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [1, 2], 5, ash, {
+			from: owner,
+		});
+		await contractInstance.createFirstCryptoMon(["bulbasaur", "squirtle"], ["male", "female"], [3, 4], 6, misty, {
+			from: owner,
+		});
 	});
 
 	context("sets challenge ready", async () => {
@@ -135,12 +121,8 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 			const randomNumber = Math.floor(Math.random() * 99 + 1);
 
 			const { logs } = await contractInstance.settleChallenge(challengeHash, randomNumber, { from: owner });
-			console.log(randomNumber);
 			assert.oneOf(logs[0].args._winnerMon.toNumber(), [0, 2]);
 			assert.equal(logs[0].args._challengeHash, challengeHash);
-
-			const mon1 = await contractInstance.cryptoMons(0);
-			const mon2 = await contractInstance.cryptoMons(2);
 		});
 
 		it("does not allow non-owners to settle battles", async () => {

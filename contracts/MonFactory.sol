@@ -7,6 +7,7 @@ contract MonFactory is Ownable {
   uint256 BASE_XP = 10;
   uint256 BATTLE_COOLDOWN_TIME = 1 days;
   uint256 BREED_COOLDOWN_TIME = 30 days;
+  uint256 MAX_SHINY = 100;
 
   struct CryptoMon {
     string name;
@@ -38,6 +39,10 @@ contract MonFactory is Ownable {
   //Mapping to store the owner of mons. Key is the unique ID of the mon and value is the
   //address of the owner
   mapping (uint256 => address) public monToOwner;
+  mapping(uint16 => uint256) public shinyCount;
+
+  event NewPlayer(address _player);
+  event NewCryptoMon(address _player, uint16[] _pokemonIds, bool[] _shiny);
 
   /**
    * Creates a new User
@@ -49,6 +54,8 @@ contract MonFactory is Ownable {
     ) public {
     require(!players[msg.sender].verified, "You already have an account!");
     players[msg.sender] = Player(_name, _avatar, true, false, false, 0);
+
+    emit NewPlayer(msg.sender);
   }
 
   /**
@@ -59,11 +66,24 @@ contract MonFactory is Ownable {
       string[] memory _names, 
       string[] memory _genders, 
       uint16[] memory _pokemonIds,
-      bool[] memory _shiny,
+      uint8 _randomNumber,
       address _player
     ) public onlyOwner {
     require(!players[_player].receivedFirstCryptoMon, "You already received your first cryptoMon!");
-    _createNewCryptoMon(_names, _genders, _pokemonIds, _shiny, _player);
+
+    bool[] memory shiny = new bool[](_pokemonIds.length);
+
+    if(_randomNumber == 5) {
+      for(uint i = 0; i < _pokemonIds.length; i++) {
+        if(shinyCount[_pokemonIds[i]] < MAX_SHINY) {
+          shiny[i] = true;
+          shinyCount[_pokemonIds[i]]++;
+          break;
+        }
+      }
+    }
+
+    _createNewCryptoMon(_names, _genders, _pokemonIds, shiny, _player);
     players[_player].receivedFirstCryptoMon = true;
   }
 
@@ -96,6 +116,8 @@ contract MonFactory is Ownable {
     }
 
     players[_player].monCount += _names.length;
+
+    emit NewCryptoMon(_player, _pokemonIds, _shiny);
   }
 
   function getCryptoMonsByOwner(address _owner) public view returns (CryptoMon[] memory) {

@@ -31,14 +31,21 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 	context("creates first cryptomon", async () => {
 		it("should create first cryptomon for registered user", async () => {
 			await contractInstance.createUser("ash", "https://avatar.com", { from: ash });
-			await contractInstance.createFirstCryptoMon(
+			const { logs } = await contractInstance.createFirstCryptoMon(
 				["pikachu", "pidgey"],
 				["male", "male"],
 				[1, 2],
-				[false, true],
+				5,
 				ash,
-				{ from: owner }
+				{
+					from: owner,
+				}
 			);
+			assert.equal(logs[0].args._player, ash);
+			assert.equal(logs[0].args._pokemonIds[0].toNumber(), 1);
+			assert.equal(logs[0].args._pokemonIds[1].toNumber(), 2);
+			assert.equal(logs[0].args._shiny[0], true);
+			assert.equal(logs[0].args._shiny[1], false);
 
 			const cryptoMons = await Promise.all([contractInstance.cryptoMons(0), contractInstance.cryptoMons(1)]);
 
@@ -48,7 +55,7 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 			assert.equal(cryptoMons[0].pokemonId, 1);
 			assert.equal(cryptoMons[0].evolutionLevel, 1);
 			assert.equal(cryptoMons[0].battleReady, false);
-			assert.equal(cryptoMons[0].shiny, false);
+			assert.equal(cryptoMons[0].shiny, true);
 
 			assert.equal(cryptoMons[1].name, "pidgey");
 			assert.equal(cryptoMons[1].gender, "male");
@@ -56,7 +63,7 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 			assert.equal(cryptoMons[1].pokemonId, 2);
 			assert.equal(cryptoMons[1].evolutionLevel, 1);
 			assert.equal(cryptoMons[1].battleReady, false);
-			assert.equal(cryptoMons[1].shiny, true);
+			assert.equal(cryptoMons[1].shiny, false);
 
 			const owners = await Promise.all([contractInstance.monToOwner(0), contractInstance.monToOwner(1)]);
 			owners.forEach((_owner) => assert.equal(_owner, ash));
@@ -64,24 +71,14 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 
 		xit("fetches cryptoMons by owner", async () => {
 			await contractInstance.createUser("ash", "https://avatar.com", { from: ash });
-			await contractInstance.createFirstCryptoMon(
-				["pikachu", "pidgey"],
-				["male", "male"],
-				[1, 2],
-				[false, true],
-				ash,
-				{ from: owner }
-			);
+			await contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [1, 2], 10, ash, {
+				from: owner,
+			});
 
 			await contractInstance.createUser("misty", "https://avatar.com", { from: misty });
-			await contractInstance.createFirstCryptoMon(
-				["pikachu", "pidgey"],
-				["male", "male"],
-				[3, 4],
-				[false, true],
-				misty,
-				{ from: owner }
-			);
+			await contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [3, 4], 1, misty, {
+				from: owner,
+			});
 
 			const ashCryptoMons = await contractInstance.getCryptoMonsByOwner(ash);
 			console.log(ashCryptoMons);
@@ -89,41 +86,22 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 
 		it("does not create first cryptomons for users who already received them", async () => {
 			await contractInstance.createUser("ash", "https://avatar.com", { from: ash });
-			await contractInstance.createFirstCryptoMon(
-				["pikachu", "pidgey"],
-				["male", "male"],
-				[1, 2],
-				[false, true],
-				ash,
-				{ from: owner }
-			);
+			await contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [1, 2], 5, ash, {
+				from: owner,
+			});
 
 			await utils.shouldThrow(
-				contractInstance.createFirstCryptoMon(
-					["pikachu", "pidgey"],
-					["male", "male"],
-					[1, 2],
-					[false, true],
-					ash,
-					{
-						from: owner,
-					}
-				)
+				contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [1, 2], 6, ash, {
+					from: owner,
+				})
 			);
 		});
 
 		it("does not create first cryptomon for unregistered users", async () => {
 			await utils.shouldThrow(
-				contractInstance.createFirstCryptoMon(
-					["pikachu", "pidgey"],
-					["male", "male"],
-					[1, 2],
-					[false, true],
-					misty,
-					{
-						from: owner,
-					}
-				)
+				contractInstance.createFirstCryptoMon(["pikachu", "pidgey"], ["male", "male"], [1, 2], 7, misty, {
+					from: owner,
+				})
 			);
 		});
 	});
