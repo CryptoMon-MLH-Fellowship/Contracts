@@ -12,6 +12,7 @@ contract MonLiveBattle is MonBattle {
   mapping (bytes32 => uint8) public challenges;
   mapping (bytes32 => BattlingMons) public monsInBattle;
 
+  event ChallengeReady(address _player);
   event NewChallenge(address _challenger, address _opponent, uint256 _monId);
   event AcceptChallenge(bytes32 _challengeHash, uint256 _challengerMon, uint256 _opponentMon);
   event AnnounceWinner(bytes32 _challengeHash, uint256 _winnerMon);
@@ -26,9 +27,28 @@ contract MonLiveBattle is MonBattle {
     _;
   }
 
+  function getChallengeReadyPlayers() public view returns (address[] memory) {
+    uint readyCount = 0;
+    for(uint i = 0; i < playerAddresses.length; i++) {
+      if(players[playerAddresses[i]].challengeReady) readyCount++;
+    }
+
+    address[] memory challengeReadyPlayers = new address[](readyCount);
+
+    uint counter = 0;
+    for(uint i = 0; i < playerAddresses.length; i++) {
+      if(players[playerAddresses[i]].challengeReady)
+        challengeReadyPlayers[counter++] = playerAddresses[i];
+    }
+
+    return challengeReadyPlayers;
+  } 
+
   function setChallengeReady() public onlyVerifiedPlayer(msg.sender) {
     require(!players[msg.sender].challengeReady, "Already challenge ready!");
     players[msg.sender].challengeReady = true;
+
+    emit ChallengeReady(msg.sender);
   }
 
   function challenge
@@ -81,10 +101,16 @@ contract MonLiveBattle is MonBattle {
       if(challengerMonScore >= opponentMonScore) {
         uint256 xpChange = calculateXpChange(diff);
         cryptoMons[mons.challengerMon].xp += (10 - xpChange);
+        players[monToOwner[mons.challengerMon]].points += (10 - xpChange);
+        players[monToOwner[mons.challengerMon]].winCount++;
+        players[monToOwner[mons.opponentMon]].lossCount++;
         emit AnnounceWinner(_challengeHash, mons.challengerMon);
       } else {
         uint256 xpChange = calculateXpChange(diff);
         cryptoMons[mons.opponentMon].xp += xpChange;
+        players[monToOwner[mons.opponentMon]].points += xpChange;
+        players[monToOwner[mons.opponentMon]].winCount++;
+        players[monToOwner[mons.challengerMon]].lossCount++;
         emit AnnounceWinner(_challengeHash, mons.opponentMon);
       }
     } else {
@@ -96,14 +122,23 @@ contract MonLiveBattle is MonBattle {
       if(challengerMonScore >= opponentMonScore) {
         uint256 xpChange = calculateXpChange(diff);
         cryptoMons[mons.challengerMon].xp += xpChange;
+        players[monToOwner[mons.challengerMon]].points += xpChange;
+        players[monToOwner[mons.challengerMon]].winCount++;
+        players[monToOwner[mons.opponentMon]].lossCount++;
         emit AnnounceWinner(_challengeHash, mons.challengerMon);
       } else {
         uint256 xpChange = calculateXpChange(diff);
         cryptoMons[mons.opponentMon].xp += (10 - xpChange);
+        players[monToOwner[mons.opponentMon]].points += (10 - xpChange);
+        players[monToOwner[mons.opponentMon]].winCount++;
+        players[monToOwner[mons.challengerMon]].lossCount++;
         emit AnnounceWinner(_challengeHash, mons.opponentMon);
       }
     }
 
+    players[monToOwner[mons.challengerMon]].challengeReady = true;
+    players[monToOwner[mons.opponentMon]].challengeReady = true;
+    
     delete challenges[_challengeHash];
     delete monsInBattle[_challengeHash];
   }

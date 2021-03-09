@@ -5,6 +5,7 @@ import "./Ownable.sol";
 
 contract MonFactory is Ownable {
   uint256 BASE_XP = 10;
+  uint256 SHINY_BASE_XP = 50;
   uint256 BATTLE_COOLDOWN_TIME = 1 days;
   uint256 BREED_COOLDOWN_TIME = 30 days;
   uint256 MAX_SHINY = 100;
@@ -28,11 +29,15 @@ contract MonFactory is Ownable {
     bool receivedFirstCryptoMon;
     bool challengeReady;
     uint256 monCount;
+    uint256 winCount;
+    uint256 lossCount;
+    uint256 points;
   }
 
   //Contains the list of all exisiting cryptoMons
   //The index of the cryptoMon is its unique ID
   CryptoMon[] public cryptoMons;
+  address[] public playerAddresses;
 
   //Mapping to map addresses to player details
   mapping (address => Player) public players;
@@ -53,7 +58,8 @@ contract MonFactory is Ownable {
       string memory _avatar
     ) public {
     require(!players[msg.sender].verified, "You already have an account!");
-    players[msg.sender] = Player(_name, _avatar, true, false, false, 0);
+    players[msg.sender] = Player(_name, _avatar, true, false, false, 0, 0, 0, 0);
+    playerAddresses.push(msg.sender);
 
     emit NewPlayer(msg.sender);
   }
@@ -103,7 +109,7 @@ contract MonFactory is Ownable {
       uint id = cryptoMons.push(CryptoMon(
         _names[i],
         _genders[i],
-        BASE_XP,
+        _shiny[i] ? SHINY_BASE_XP : BASE_XP,
         now,
         now,
         _pokemonIds[i],

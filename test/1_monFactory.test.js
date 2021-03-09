@@ -20,6 +20,9 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 			assert.equal(_ash.name, "ash");
 			assert.equal(_ash.avatar, "https://avatar.com");
 			assert.equal(_ash.verified, true);
+
+			const ashAddress = await contractInstance.playerAddresses(0);
+			assert.equal(ashAddress, ash);
 		});
 
 		it("does not create new account for registered user", async () => {
@@ -51,7 +54,7 @@ contract("MonFactory", ([owner, ash, misty, brok]) => {
 
 			assert.equal(cryptoMons[0].name, "pikachu");
 			assert.equal(cryptoMons[0].gender, "male");
-			assert.equal(cryptoMons[0].xp.toNumber(), 10);
+			assert.equal(cryptoMons[0].xp.toNumber(), 50);
 			assert.equal(cryptoMons[0].pokemonId, 1);
 			assert.equal(cryptoMons[0].evolutionLevel, 1);
 			assert.equal(cryptoMons[0].battleReady, false);

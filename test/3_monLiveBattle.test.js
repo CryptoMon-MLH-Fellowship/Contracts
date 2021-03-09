@@ -28,7 +28,9 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 
 	context("sets challenge ready", async () => {
 		it("allows players to set challenge ready", async () => {
-			await contractInstance.setChallengeReady({ from: ash });
+			const { logs } = await contractInstance.setChallengeReady({ from: ash });
+			assert.equal(logs[0].args._player, ash);
+
 			const _ash = await contractInstance.players(ash);
 			assert.equal(_ash.challengeReady, true);
 		});
@@ -43,6 +45,10 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 		it("allows players to challenge verified and challenge ready players", async () => {
 			await contractInstance.setChallengeReady({ from: ash });
 			await contractInstance.setChallengeReady({ from: misty });
+
+			const challengeReadyPlayers = await contractInstance.getChallengeReadyPlayers();
+			assert.equal(challengeReadyPlayers[0], ash);
+			assert.equal(challengeReadyPlayers[1], misty);
 
 			const { logs } = await contractInstance.challenge(misty, 0, { from: ash });
 			assert.equal(logs[0].args._challenger, ash);
@@ -99,6 +105,9 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 
 			const monsInBattle = await contractInstance.monsInBattle(challengeHash);
 			assert.equal(monsInBattle.opponentMon, 2);
+
+			const mistyProfile = await contractInstance.players(misty);
+			assert.equal(mistyProfile.challengeReady, false);
 		});
 
 		it("does not allow players to accept unreceived challenges", async () => {
@@ -123,6 +132,12 @@ contract("MonLiveBattle", ([owner, ash, misty, brok]) => {
 			const { logs } = await contractInstance.settleChallenge(challengeHash, randomNumber, { from: owner });
 			assert.oneOf(logs[0].args._winnerMon.toNumber(), [0, 2]);
 			assert.equal(logs[0].args._challengeHash, challengeHash);
+
+			const ashProfile = await contractInstance.players(ash);
+			assert.equal(ashProfile.challengeReady, true);
+
+			const mistyProfile = await contractInstance.players(misty);
+			assert.equal(mistyProfile.challengeReady, true);
 		});
 
 		it("does not allow non-owners to settle battles", async () => {

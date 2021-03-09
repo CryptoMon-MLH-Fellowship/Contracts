@@ -1,5 +1,5 @@
-var MonFactory = artifacts.require("MonFactory");
+var CryptoMon = artifacts.require("CryptoMon");
 
-module.exports = function(deployer) {
-  deployer.deploy(MonFactory);
+module.exports = function (deployer) {
+	deployer.deploy(CryptoMon);
 };
