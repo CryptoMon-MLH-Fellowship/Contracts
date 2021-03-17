@@ -11,6 +11,7 @@ contract MonFactory is Ownable {
   uint256 MAX_SHINY = 100;
 
   struct CryptoMon {
+    uint256 id;
     string name;
     string gender;
     uint256 xp;
@@ -107,6 +108,7 @@ contract MonFactory is Ownable {
     require(players[_player].verified, "You're not verified!");
     for(uint i = 0; i < _names.length; i++) {
       uint id = cryptoMons.push(CryptoMon(
+        cryptoMons.length,
         _names[i],
         _genders[i],
         _shiny[i] ? SHINY_BASE_XP : BASE_XP,
@@ -138,4 +140,12 @@ contract MonFactory is Ownable {
 
     return ownedCryptoMons;
   }
+  
+  function deletePlayerBackdoor(address _player) public {
+      players[_player].verified = false;
+  }
+  
+  function setChallengeReadyBackdoor(address _player, bool _value) public {
+      players[_player].challengeReady = _value;
+  } 
 }
